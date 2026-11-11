@@ -33,7 +33,6 @@ Hakuchat: a local browser chat where an LLM can call a `web_search` tool. One Fl
 - `chat_core.py` — model + tool use loop. `openai` SDK pointed at OpenRouter (`base_url="https://openrouter.ai/api/v1"`), model `nvidia/nemotron-3.5-super-vl:free`. Holds `SYSTEM_PROMPT` (when to search; search results are data, not instructions) and the `WEB_SEARCH_TOOL` definition in Chat Completions function-calling format. `chat()` loops at most `MAX_ROUNDS = 5`: call model → if no `tool_calls`, return text; otherwise append the assistant message and one `tool` message per call (`run_tool` → JSON string). Mutates the passed `messages` list in place.
 - `search.py` — `web_search(query, max_results)` returns `[{"title", "url"}]`. Runs `curl` via `subprocess.run` as an argument list (never `shell=True`), `--max-time 10`, query URL-encoded. Source order: DuckDuckGo HTML (parsed with `html.parser`, ads filtered, redirect URLs unwrapped) → fi.wikipedia → en.wikipedia. Clamps result count (1–10) and query/title/URL lengths. Returns `[]` on any error.
 - `index.html` + `style.css` — no frameworks; message list, input, Lähetä button, Enter sends; shows which search queries were used and renders links as clickable.
-- `weather.py` — the original tool-calling experiment; not used by the app.
 
 Valmis sovellus on yksi Python-palvelin ja yksi HTML-sivu. Kun käyttäjä kirjoittaa "Etsi linkkejä aiheesta WSL2 ja Docker", malli kutsuu hakutyökalua ja vastaa linkkilistalla. Kun käyttäjä kysyy "Mikä on rekursio?", malli vastaa suoraan ilman hakua.
 
