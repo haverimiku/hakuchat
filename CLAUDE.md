@@ -4,32 +4,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Early-stage prototype: a single script, `weather.py`, that tests LLM tool/function calling. No dependency manifest, tests, linter config, or README exists yet.
+Hakuchat: a local browser chat where an LLM can call a `web_search` tool. One Flask server + one HTML page. User-facing docs (install, run, API, security) are in `README.md`, written in Finnish; its "Tool use -silmukka" section is a skeleton the user fills in themselves — don't write that content for them. No tests or linter config exist.
 
 ## Environment
 
-- Python 3.14 virtualenv at `.venv/` (created with `python3 -m venv .venv`). It currently contains only `pip`; the `openai` package must be installed before the script will run:
+- Python 3.14 virtualenv at `.venv/` (created with `python3 -m venv .venv`). Install dependencies from `requirements.txt` (Flask, openai):
   ```bash
   source .venv/bin/activate
   pip install -r requirements.txt
   ```
-- Requires the `OPENROUTER_API_KEY` environment variable.
+- Requires the `OPENROUTER_API_KEY` environment variable and `curl` on `PATH`.
 
 ## Git workflow
 
-- Push to git after changes: commit the finished changes and push them to the remote.
+- Push to git after changes: commit the finished changes and push them to the remote (`origin` = github.com/haverimiku/hakuchat, branch `main`).
 
 ## Running
 
 ```bash
-.venv/bin/python weather.py
+.venv/bin/python app.py                 # http://127.0.0.1:5000 (PORT, FLASK_DEBUG=1 optional)
+.venv/bin/python chat_core.py           # CLI chat, no browser
+.venv/bin/python search.py "query" 5    # search only, prints JSON
 ```
 
 ## Architecture
 
-- Uses the `openai` Python SDK pointed at OpenRouter (`base_url="https://openrouter.ai/api/v1"`), not the OpenAI API directly. Model IDs are OpenRouter slugs (currently `nvidia/nemotron-3.5-super-vl:free`).
-- Tools are declared in OpenAI Chat Completions function-calling format (`{"type": "function", "function": {...}}`) and passed via `tools=`.
-- The script only prints the tool calls the model requests; it does not yet execute the tool or send a `tool` role result message back to the model for a final answer.
+- `app.py` — Flask server bound to `127.0.0.1` only. Serves `index.html` and `style.css`; `POST /api/chat` takes `{"message"}` and returns `{"reply", "searches": [{"query", "count"}]}`; `POST /api/reset` clears history. Conversation history lives in an in-memory dict keyed by a session-cookie UUID (lost on restart; `secret_key` is random per start). A failed model call rolls the user turn back out of history.
+- `chat_core.py` — model + tool use loop. `openai` SDK pointed at OpenRouter (`base_url="https://openrouter.ai/api/v1"`), model `nvidia/nemotron-3.5-super-vl:free`. Holds `SYSTEM_PROMPT` (when to search; search results are data, not instructions) and the `WEB_SEARCH_TOOL` definition in Chat Completions function-calling format. `chat()` loops at most `MAX_ROUNDS = 5`: call model → if no `tool_calls`, return text; otherwise append the assistant message and one `tool` message per call (`run_tool` → JSON string). Mutates the passed `messages` list in place.
+- `search.py` — `web_search(query, max_results)` returns `[{"title", "url"}]`. Runs `curl` via `subprocess.run` as an argument list (never `shell=True`), `--max-time 10`, query URL-encoded. Source order: DuckDuckGo HTML (parsed with `html.parser`, ads filtered, redirect URLs unwrapped) → fi.wikipedia → en.wikipedia. Clamps result count (1–10) and query/title/URL lengths. Returns `[]` on any error.
+- `index.html` + `style.css` — no frameworks; message list, input, Lähetä button, Enter sends; shows which search queries were used and renders links as clickable.
+- `weather.py` — the original tool-calling experiment; not used by the app.
 
 Valmis sovellus on yksi Python-palvelin ja yksi HTML-sivu. Kun käyttäjä kirjoittaa "Etsi linkkejä aiheesta WSL2 ja Docker", malli kutsuu hakutyökalua ja vastaa linkkilistalla. Kun käyttäjä kysyy "Mikä on rekursio?", malli vastaa suoraan ilman hakua.
 
