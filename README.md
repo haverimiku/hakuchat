@@ -20,7 +20,7 @@ git clone https://github.com/haverimiku/hakuchat.git
 cd hakuchat
 python3 -m venv .venv
 source .venv/bin/activate
-pip install flask openai
+pip install -r requirements.txt
 ```
 
 ## API-avain

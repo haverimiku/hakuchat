@@ -11,7 +11,7 @@ Early-stage prototype: a single script, `weather.py`, that tests LLM tool/functi
 - Python 3.14 virtualenv at `.venv/` (created with `python3 -m venv .venv`). It currently contains only `pip`; the `openai` package must be installed before the script will run:
   ```bash
   source .venv/bin/activate
-  pip install openai
+  pip install -r requirements.txt
   ```
 - Requires the `OPENROUTER_API_KEY` environment variable.
 
