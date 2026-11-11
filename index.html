@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hakuchat</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Hakuchat</h1>
+  <button id="reset" type="button">Uusi keskustelu</button>
+</header>
+<div id="messages"></div>
+<form id="form">
+  <textarea id="input" rows="2" placeholder="Kirjoita viesti… (Enter lähettää, Shift+Enter rivinvaihto)" autofocus></textarea>
+  <button id="send" type="submit">Lähetä</button>
+</form>
+<script>
+const messagesEl = document.getElementById("messages");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+
+// Markdown-linkit [teksti](url) ja paljaat http(s)-osoitteet.
+const LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>()\]]+[^\s<>()\].,;:!?'"])/g;
+
+// Rakentaa tekstin DOM-solmuina (ei innerHTML:ää) -> mallin teksti ei voi ajaa koodia.
+function renderText(el, text) {
+  let last = 0;
+  for (const m of text.matchAll(LINK_RE)) {
+    el.append(text.slice(last, m.index));
+    const a = document.createElement("a");
+    a.href = m[2] || m[3];
+    a.textContent = m[1] || m[3];
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    el.append(a);
+    last = m.index + m[0].length;
+  }
+  el.append(text.slice(last));
+}
+
+function addMessage(cls, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  renderText(div, text);
+  messagesEl.append(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text || sendBtn.disabled) return;
+  input.value = "";
+  addMessage("user", text);
+  sendBtn.disabled = true;
+  const pending = addMessage("assistant pending", "Ajattelee…");
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+    const data = await res.json();
+    pending.remove();
+    if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+    for (const s of data.searches || []) {
+      addMessage("search", `🔍 Haettiin: "${s.query}" (${s.count} tulosta)`);
+    }
+    addMessage("assistant", data.reply || "(tyhjä vastaus)");
+  } catch (err) {
+    pending.remove();
+    addMessage("error", "Virhe: " + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+form.addEventListener("submit", (e) => { e.preventDefault(); sendMessage(); });
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+document.getElementById("reset").addEventListener("click", async () => {
+  await fetch("/api/reset", { method: "POST" });
+  messagesEl.replaceChildren();
+  input.focus();
+});
+</script>
+</body>
+</html>
