@@ -6,3 +6,6 @@
 .venv/
 __pycache__/
 *.pyc
+
+# Omat muistiinpanot (vain paikallisesti)
+TOOL_USE.md
