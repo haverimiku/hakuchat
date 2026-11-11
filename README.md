@@ -116,3 +116,23 @@ _TODO_
 ### Mitä opin
 
 _TODO_
+
+## Reflektio
+
+<!-- Oma reflektio tähän, yhteensä 200–400 sanaa. Vastaa alla oleviin kysymyksiin. -->
+
+### Missä kohdassa agentti teki virheen tai huonon ratkaisun, ja miten huomasit sen?
+
+_TODO_
+
+### Minkä osan koodista ymmärrän heikoimmin? Mitä tekisin asialle?
+
+_TODO_
+
+### Miten agentin käyttö vaikutti oppimiseeni verrattuna siihen, että olisin kirjoittanut koodin itse?
+
+_TODO_
+
+### Milloin malli päätti hakea ja milloin ei? Toimiko päätös järkevästi?
+
+_TODO_
