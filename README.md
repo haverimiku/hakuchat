@@ -79,60 +79,26 @@ Keskusteluhistoria pidetään palvelimen muistissa selainistunnon evästeen peru
 
 ## Tool use -silmukka
 
-<!-- Oma selitys tähän. Ehdotettu runko: -->
+Silmukka on `chat_core.py`:n funktiossa `chat()` (rivit 83–111). Funktio `run_tool()` (rivit 59–80) suorittaa yksittäisen työkalukutsun.
 
-### Mitä tool use tarkoittaa
+Malli ei itse hae mitään. Se voi vain *pyytää*, että työkalua kutsutaan tietyillä argumenteilla. Ohjelma suorittaa haun ja lähettää tuloksen takaisin mallille. Sitten malli päättää, haluaako se tehdä uuden haun vai vastata tekstillä.
 
-_TODO: Mitä tarkoittaa, että malli "kutsuu työkalua"? Kuka työkalun oikeasti suorittaa?_
-
-### Työkalun määrittely
-
-_TODO: Miten `web_search` kuvataan mallille (`WEB_SEARCH_TOOL` tiedostossa `chat_core.py`) ja miksi kuvausteksti vaikuttaa siihen, milloin malli hakee?_
-
-### Silmukan kulku
-
-_TODO: Käy läpi `chat()`-funktion vaiheet:_
-
-1. _..._
-2. _..._
-3. _..._
-
-### Viestihistorian rakenne
-
-_TODO: Esimerkki `messages`-listasta yhden haun jälkeen (rollit `system`, `user`, `assistant` + `tool_calls`, `tool`). Miksi `tool_call_id` tarvitaan?_
-
-```text
-system    → ...
-user      → ...
-assistant → tool_calls: web_search(...)
-tool      → [...]
-assistant → ...
-```
-
-### Miksi kierrosraja (5)?
-
-_TODO_
-
-### Mitä opin
-
-_TODO_
+Silmukka kiertää enintään 5 kertaa. Jokainen kierros on yksi kutsu. Raja estää tilanteen, jossa malli pyytäisi hakuja loputtomasti.
 
 ## Reflektio
 
-<!-- Oma reflektio tähän, yhteensä 200–400 sanaa. Vastaa alla oleviin kysymyksiin. -->
-
 ### Missä kohdassa agentti teki virheen tai huonon ratkaisun, ja miten huomasit sen?
 
-_TODO_
+Ensimmäisessä versiossa oli tietoturvapuutteita. System-prompt ei kertonut mallille, että hakutulokset ovat dataa eivätkä ohjeita. Otsikoiden pituutta ei rajattu, mallikutsulla ei ollut aikarajaa ja .gitignore puuttui. Huomasin puutteet vasta, kun lisäsin tietoturvataulukon CLAUDE.md:hen ja pyysin agenttia tarkistamaan koodin sitä vasten. Opin, että vaatimukset kannattaa antaa agentille heti alussa eikä vasta jälkikäteen.
 
 ### Minkä osan koodista ymmärrän heikoimmin? Mitä tekisin asialle?
 
-_TODO_
+Heikoimmin ymmärrän search.py: miten html.parser käy sivun läpi ja miten uudelleenohjauslinkit puretaan. Ajaisin search.py:tä ja tulostaisin välivaiheita. Voisin myös pyytää agenttia selittämään koodin rivi riviltä.
 
 ### Miten agentin käyttö vaikutti oppimiseeni verrattuna siihen, että olisin kirjoittanut koodin itse?
 
-_TODO_
+Sain toimivan sovelluksen paljon nopeammin, mutta riskinä on, että koodi toimii ilman että ymmärrän sitä. Eniten opin silloin, kun pyysin selityksiä ohjelman toiminnasta. Jos olisin kirjoittanut kaiken itse, olisin luultavasti oppinut virheiden kautta syvemmin, mutta tekeminen olisi ollut huomattavasti hitaampaa.
 
 ### Milloin malli päätti hakea ja milloin ei? Toimiko päätös järkevästi?
 
-_TODO_
+Kun pyysin "Etsi linkkejä aiheesta WSL2 ja Docker", malli kutsui web_search-työkalua ja vastasi linkkilistalla. Kysymykseen "Mikä on rekursio?" se vastasi suoraan ilman hakua, mikä oli järkevää, koska kyse on yleistiedosta. Myös jatkokysymys "Etsi vielä suomenkielisiä" toimi, koska historia säilyi.
